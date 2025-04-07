@@ -4,10 +4,9 @@ clc
 
 start_position = 1;
 end_position = 14;
-dump_spaces = [4,10];
-swap_spaces = [6,8]; % only enter the first spot
+dump_space = 8;
+swap_spaces = [4,11]; % only enter the first spot
 stats_table = [0,0;0,0;0,0;0,0]; % distance, swaps, dumps
-distance_offset = [0,0];
 player_pos = [0,0];
 turn = 1;
 turn_count = 1;
@@ -15,30 +14,55 @@ turn_count = 1;
 while true
     disp("Player " + turn + "'s turn");
 
-    % take pictures until dice is picked up
-    % take pictures until dice is there and get dice roll
-    roll = randi(6);
-
-    if player_pos(turn) + roll == player_pos(mod(turn,2)+1)
-        roll = roll - 1;
-        distance_offset(turn) = distance_offset(turn) + 1;
-        if roll == 1
-            disp("You rolled 2 but your opponent is already there, moving 1 space");
-        else
-            disp("You rolled " + (roll+1) + " but your opponent is already there, moving " + roll + " spaces");
+    roll = 0;
+    while roll == 0
+        camList = webcamlist; % finds webcams
+        cam = webcam(2); % USB cam is the second
+        %preview(cam); % shows video
+        for i=5:-1:1
+            disp(i); % count down
+            pause(1); % wait one second in between
         end
-    else
-        disp("You rolled " + roll);
+        image = snapshot(cam);
+        
+        % this will make your picture appear on the screen.
+        %imshow(image)
+        
+        roi4dice = [348   193   184   131];
+        %disp(roi4dice)
+        
+        croppedImage=imcrop(image,roi4dice);
+        imshow(croppedImage);
+        
+        r_channel=croppedImage(:,:,1);
+        g_channel=croppedImage(:,:,2);
+        b_channel=croppedImage(:,:,3);
+        
+        %imtool(croppedImage)
+        
+        found = r_channel < 120 & g_channel < 140 & b_channel > 100;
+        Improved2=bwareaopen(found,25); % gets rid of object smaller than 5 pixels area
+        imshow(Improved2)
+        
+        filledHoles=imfill(found,'holes');
+        imshow(filledHoles)
+        
+        tableOfProp = regionprops('table',Improved2, 'BoundingBox');
+        NumberRolled=height(tableOfProp); % this command works on tables not matrix
+        
+        roll = size(tableOfProp);
+        fprintf("You rolled %d",roll(1));
     end
 
-    stats_table(1,turn) = stats_table(1,turn) + roll; % increase distance travelled stat
-
-    if roll > 0
-        if player_pos(turn) == 0 % if player not on board, do not use claw, tell player to place piece
-            player_pos(turn) = roll; % 0 + roll = roll
+    if player_pos(turn) + roll == player_pos(mod(turn,2)+1) % if you would land on the other player, you cannot move
+        disp("You rolled " + roll + " but your opponent is already there, you cannot move");
+    else
+        disp("You rolled " + roll);
+        player_pos(turn) = player_pos(turn) + roll; % increase pos
+        stats_table(1,turn) = stats_table(1,turn) + roll; % increase distance travelled stat
+        if player_pos(turn) == roll % if player not on board, do not use claw, tell player to place piece
             disp("Place the piece on position " + roll);
         else
-            player_pos(turn) = player_pos(turn) + roll; % increase pos
             if player_pos(turn) >= end_position % if reached the end, end the game
                 % move piece to 14
                 break;
@@ -48,14 +72,12 @@ while true
     end
 
     if randi(4) == 1 % if 25% chance hits
-        for j = dump_spaces
-            if player_pos(turn) == j % if player is on the dump space
-                % dump player
-                player_pos(turn) = 0;
-                stats_table(2,turn) = stats_table(2,turn) + 1;
-                disp("You got dumped");
-                break;
-            end
+        if player_pos(turn) == dump_space % if player is on the dump space
+            % dump player
+            player_pos(turn) = 0;
+            stats_table(2,turn) = stats_table(2,turn) + 1;
+            disp("You got dumped");
+            break;
         end
     end
 
@@ -106,14 +128,14 @@ disp("Player " + turn + " wins!");
 displacement = 25;
 disp("                      Player 1    Player 2")
 fprintf("Average Roll");
-for j = 1:displacement - 12 - floor((strlength(num2str(round((stats_table(1,1)+distance_offset(1)) / turn_count,2)))-1)/2)
+for j = 1:displacement - 12 - floor((strlength(num2str(round(stats_table(1,1) / turn_count,2)))-1)/2)
     fprintf(" ");
 end
-fprintf(num2str(round((stats_table(1,1)+distance_offset(1)) / turn_count,2)));
-for i = 1:11 - floor((strlength(num2str(round((stats_table(1,1)+distance_offset(1)) / turn_count,2))))/2) - floor((strlength(num2str(round((stats_table(1,2)+distance_offset(2)) / (turn_count-mod(turn,2)),2)))-1)/2)
+fprintf(num2str(round(stats_table(1,1) / turn_count,2)));
+for i = 1:11 - floor((strlength(num2str(round(stats_table(1,1) / turn_count,2))))/2) - floor((strlength(num2str(round(stats_table(1,2) / (turn_count-mod(turn,2)),2)))-1)/2)
     fprintf(" ");
 end
-fprintf(round((stats_table(1,2)+distance_offset(2)) / (turn_count-mod(turn,2)),2) + "\n");
+fprintf(round(stats_table(1,2) / (turn_count-mod(turn,2)),2) + "\n");
 
 stats_table(1,turn) = stats_table(1,turn) - player_pos(turn) + 14;
 
