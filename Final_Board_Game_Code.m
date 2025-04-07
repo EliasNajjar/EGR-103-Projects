@@ -10,19 +10,23 @@ stats_table = [0,0;0,0;0,0;0,0]; % distance, swaps, dumps
 player_pos = [0,0];
 turn = 1;
 turn_count = 1;
+previous_roll = 0;
 
 while true
     disp("Player " + turn + "'s turn");
-
-    roll = 0;
-    while roll == 0
+    
+    roll = previous_roll;
+    dice_removed = false;
+    while (roll == previous_roll && ~dice_removed) || (roll == 0 && dice_removed) % go until dice is picked up, then rolled
         camList = webcamlist; % finds webcams
         cam = webcam(2); % USB cam is the second
         %preview(cam); % shows video
+        %{
         for i=5:-1:1
             disp(i); % count down
             pause(1); % wait one second in between
         end
+        %}
         image = snapshot(cam);
         
         % this will make your picture appear on the screen.
@@ -42,17 +46,22 @@ while true
         
         found = r_channel < 120 & g_channel < 140 & b_channel > 100;
         Improved2=bwareaopen(found,25); % gets rid of object smaller than 5 pixels area
-        imshow(Improved2)
+        %imshow(Improved2)
         
         filledHoles=imfill(found,'holes');
-        imshow(filledHoles)
+        %imshow(filledHoles)
         
         tableOfProp = regionprops('table',Improved2, 'BoundingBox');
         NumberRolled=height(tableOfProp); % this command works on tables not matrix
         
         roll = size(tableOfProp);
-        fprintf("You rolled %d",roll(1));
+        %fprintf("You rolled %d",roll(1));
+
+        if roll == 0
+            dice_removed = true;
+        end
     end
+    previous_roll = roll;
 
     if player_pos(turn) + roll == player_pos(mod(turn,2)+1) % if you would land on the other player, you cannot move
         disp("You rolled " + roll + " but your opponent is already there, you cannot move");
