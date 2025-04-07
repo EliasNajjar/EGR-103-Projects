@@ -23,7 +23,7 @@ while true
         roll = roll - 1;
         distance_offset(turn) = distance_offset(turn) + 1;
         if roll == 1
-            disp("You rolled " + (roll+1) + " but your opponent is already there, moving 1 space");
+            disp("You rolled 2 but your opponent is already there, moving 1 space");
         else
             disp("You rolled " + (roll+1) + " but your opponent is already there, moving " + roll + " spaces");
         end
@@ -33,16 +33,18 @@ while true
 
     stats_table(1,turn) = stats_table(1,turn) + roll; % increase distance travelled stat
 
-    if player_pos(turn) == 0 % if player not on board, do not use claw, tell player to place piece
-        player_pos(turn) = roll; % 0 + roll = roll
-        disp("Place the piece on position " + roll);
-    else
-        player_pos(turn) = player_pos(turn) + roll; % increase pos
-        if player_pos(turn) >= end_position % if reached the end, end the game
-            % move piece to 14
-            break;
+    if roll > 0
+        if player_pos(turn) == 0 % if player not on board, do not use claw, tell player to place piece
+            player_pos(turn) = roll; % 0 + roll = roll
+            disp("Place the piece on position " + roll);
+        else
+            player_pos(turn) = player_pos(turn) + roll; % increase pos
+            if player_pos(turn) >= end_position % if reached the end, end the game
+                % move piece to 14
+                break;
+            end
+            % move piece number of spaces
         end
-        % move piece number of spaces
     end
 
     if randi(4) == 1 % if 25% chance hits
