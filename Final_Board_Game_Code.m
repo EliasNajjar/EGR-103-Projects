@@ -17,26 +17,23 @@ while true
     
     roll = previous_roll;
     dice_removed = false;
-    while (roll == previous_roll && ~dice_removed) || (roll == 0 && dice_removed) % go until dice is picked up, then rolled
+    while (roll == previous_roll & ~dice_removed) | (roll == 0 & dice_removed) % go until dice is picked up, then rolled
         camList = webcamlist; % finds webcams
         cam = webcam(2); % USB cam is the second
         %preview(cam); % shows video
-        %{
-        for i=5:-1:1
-            disp(i); % count down
-            pause(1); % wait one second in between
-        end
-        %}
+
+        pause(5); % wait five seconds in between
+        
         image = snapshot(cam);
         
         % this will make your picture appear on the screen.
         %imshow(image)
         
-        roi4dice = [348   193   184   131];
+        roi4dice = [131   225   229   164];
         %disp(roi4dice)
         
         croppedImage=imcrop(image,roi4dice);
-        imshow(croppedImage);
+        %imshow(croppedImage);
         
         r_channel=croppedImage(:,:,1);
         g_channel=croppedImage(:,:,2);
@@ -55,13 +52,17 @@ while true
         NumberRolled=height(tableOfProp); % this command works on tables not matrix
         
         roll = size(tableOfProp);
+        roll = roll(1);
         %fprintf("You rolled %d",roll(1));
 
         if roll == 0
             dice_removed = true;
+            %disp("dice removed");
         end
     end
     previous_roll = roll;
+    
+    %roll = randi(6);
 
     if player_pos(turn) + roll == player_pos(mod(turn,2)+1) % if you would land on the other player, you cannot move
         disp("You rolled " + roll + " but your opponent is already there, you cannot move");
@@ -71,12 +72,12 @@ while true
         stats_table(1,turn) = stats_table(1,turn) + roll; % increase distance travelled stat
         if player_pos(turn) == roll % if player not on board, do not use claw, tell player to place piece
             disp("Place the piece on position " + roll);
+        elseif player_pos(turn) >= end_position % if reached the end, end the game
+            % move piece to 14
+            break;
         else
-            if player_pos(turn) >= end_position % if reached the end, end the game
-                % move piece to 14
-                break;
-            end
             % move piece number of spaces
+            
         end
     end
 
@@ -144,9 +145,9 @@ fprintf(num2str(round(stats_table(1,1) / turn_count,2)));
 for i = 1:11 - floor((strlength(num2str(round(stats_table(1,1) / turn_count,2))))/2) - floor((strlength(num2str(round(stats_table(1,2) / (turn_count-mod(turn,2)),2)))-1)/2)
     fprintf(" ");
 end
-fprintf(round(stats_table(1,2) / (turn_count-mod(turn,2)),2) + "\n");
+fprintf(num2str(round(stats_table(1,2) / (turn_count-mod(turn,2)),2)) + "\n");
 
-stats_table(1,turn) = stats_table(1,turn) - player_pos(turn) + 14;
+stats_table(1,turn) = stats_table(1,turn) - player_pos(turn) + end_position;
 
 stats_rows = ["Distance Travelled","Dumps","Swaps Forward","Swaps Backward"];
 for i = 1:length(stats_rows)
