@@ -29,7 +29,7 @@ while true
         % this will make your picture appear on the screen.
         %imshow(image)
         
-        roi4dice = [131   225   229   164];
+        roi4dice = [124   154   180   152];
         %disp(roi4dice)
         
         croppedImage=imcrop(image,roi4dice);
@@ -41,7 +41,7 @@ while true
         
         %imtool(croppedImage)
         
-        found = r_channel < 120 & g_channel < 140 & b_channel > 100;
+        found = r_channel < 80 & g_channel < 100 & b_channel < 100;
         Improved2=bwareaopen(found,25); % gets rid of object smaller than 5 pixels area
         %imshow(Improved2)
         

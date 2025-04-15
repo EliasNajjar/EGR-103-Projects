@@ -6,10 +6,8 @@ camList = webcamlist % finds webcams
 %%
 cam = webcam(2); % USB cam is the second
 preview(cam); % shows video
-for i=5:-1:1
-    disp(i); % count down
-    pause(1); % wait one second in between
-end
+pause(1);
+
 image = snapshot(cam);
 
 % this will make your picture appear on the screen.

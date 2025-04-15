@@ -15,7 +15,7 @@ image = snapshot(cam);
 % this will make your picture appear on the screen.
 imshow(image)
 
-roi4dice = [348   193   184   131];
+roi4dice = [141   154   216   141];
 disp(roi4dice)
 
 croppedImage=imcrop(image,roi4dice);
@@ -27,7 +27,7 @@ b_channel=croppedImage(:,:,3);
 
 imtool(croppedImage)
 
-found = r_channel < 120 & g_channel < 140 & b_channel > 100;
+found = r_channel < 80 & g_channel < 80 & b_channel > 75;
 Improved2=bwareaopen(found,25); % gets rid of object smaller than 5 pixels area
 imshow(Improved2)
 
