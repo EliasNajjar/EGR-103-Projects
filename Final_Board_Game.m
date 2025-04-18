@@ -97,11 +97,20 @@ turnNum=0;
 
 
 previous_roll = 0;
-roi4dice = [141   154   216   141];
+roi4dice = [287   229   121    82];
 croppingForRealign = [0 0 200 480];
 cam = webcam(2); % USB cam is the second
 s = serialport('COM4',9600);
+% Connect to Arduino
+%swap1 = serialport(,9600);
+%swap2 = serialport(,9600);
+a = arduino(); % Connect to Arduino using default port
+% Attach standard servo to pin D9
+servoMotor = servo(a, 'D9', 'MinPulseDuration', 700e-6, 'MaxPulseDuration', 2300e-6);
+% Attach continuous rotation servo to pin D11
+rackPinion = servo(a, 'D11', 'MinPulseDuration', 700e-6, 'MaxPulseDuration', 2300e-6);
 %preview(cam); % shows video
+stepsForOneSpace = 2052 / 14;
 
 while turnNum<= 10
     % Check whose turn it is
@@ -131,7 +140,7 @@ MoveComplete=0;
 if mod(turnNum,2) == 0
     roll = previous_roll;
     dice_removed = false;
-    while (roll == previous_roll & ~dice_removed) | (roll == 0 & dice_removed) % go until dice is picked up, then rolled
+    while (roll == previous_roll & ~dice_removed) || (roll == 0 & dice_removed) % go until dice is picked up, then rolled
         pause(5); % wait five seconds in between
         
         image = snapshot(cam);
@@ -145,10 +154,18 @@ if mod(turnNum,2) == 0
         r_channel=croppedImage(:,:,1);
         g_channel=croppedImage(:,:,2);
         b_channel=croppedImage(:,:,3);
+
+        rg_ratio=double(r_channel)./double(g_channel);% red green ratio
+        rb_ratio=double(r_channel)./double(b_channel);% red blue ratio
+        gb_ratio=double(g_channel)./double(b_channel);% green blue ratio
+        
+        rg_ratio(isnan(rg_ratio))=0;% if it is nan it sets it to zero
+        rb_ratio(isnan(rb_ratio))=0;% this should only happen if it is black
+        gb_ratio(isnan(gb_ratio))=0;
         
         %imtool(croppedImage)
         
-        found = r_channel < 80 & g_channel < 80 & b_channel > 75;
+        found = rb_ratio < 1.4 & r_channel < 150 & g_channel < 150 & b_channel < 150;
         Improved2=bwareaopen(found,25); % gets rid of object smaller than 5 pixels area
         %imshow(Improved2)
         
@@ -449,8 +466,69 @@ BoardSetup(:,4)=(BoardSetup(:,2)+BoardSetup(:,3));
 %************************************************************************
 %************************************************************************
 
-
-
+% move claw to piece
+steps_for_1 = -stepsForOneSpace * (.5 + Piece2Move);
+% Append combines the various strings into one individual string to be sent over to the Arduino
+Multiple_Stepper_String = append("1,",int2str(steps_for_1),",");
+% Send the string to the Arduino using the connected serial port
+write(s,Multiple_Stepper_String,'string');
+pause(5);
+neutral = 0.49; % Adjust this based on testing
+x = 0.047;
+% go down
+writePosition(rackPinion, neutral + (0.28 * x));
+pause(2);
+% Stop movement
+writePosition(rackPinion, neutral);
+pause(2);
+% Grab
+writePosition(servoMotor, 0);
+pause(2);
+% Stop movement
+writePosition(rackPinion, neutral - 0.01);
+pause(2);
+% go up
+x = 0.066;
+writePosition(rackPinion, neutral - (1.1 * x));
+pause(2);
+x = 0.0435;
+% Stop continuous rotation servo
+writePosition(rackPinion, neutral);
+pause(3);
+% move piece
+steps_for_1 = -stepsForOneSpace * dice;
+% Append combines the various strings into one individual string to be sent over to the Arduino
+Multiple_Stepper_String = append("1,",int2str(steps_for_1),",");
+% Send the string to the Arduino using the connected serial port
+write(s,Multiple_Stepper_String,'string');
+pause(5);
+% pause(12);
+% go down
+x = 0.050;
+writePosition(rackPinion, neutral + (0.25 * x));
+pause(2);
+% Stop continuous rotation servo
+writePosition(rackPinion, neutral);
+pause(2);
+% Ungrab
+writePosition(servoMotor, 0.5);
+pause(2);
+% Stop continuous rotation servo
+writePosition(rackPinion, neutral - 0.015);
+pause(2);
+% go up
+x = 0.066;
+writePosition(rackPinion, neutral - (1.23 * x));
+pause(2);
+% Stop continuous rotation servo
+writePosition(rackPinion, neutral);
+% reset claw
+steps_for_1 = stepsForOneSpace * (dice + .5 + Piece2Move);
+% Append combines the various strings into one individual string to be sent over to the Arduino
+Multiple_Stepper_String = append("1,",int2str(steps_for_1),",");
+% Send the string to the Arduino using the connected serial port
+write(s,Multiple_Stepper_String,'string');
+pause(5);
 
 
 %**********************************************************************
@@ -489,11 +567,11 @@ BoardSetup(:,4)=(BoardSetup(:,2)+BoardSetup(:,3));
 Pos3Rand=randi(4); % Get a random number between 1 & 4
 if Pos3Rand==2
     %swap the pieces currently in positions 3 and 4
-    if BoardSetup(3,4)==1 || BoardSetup(4,4)==1
-        PlaceHolder=BoardSetup(3,2:3);
-        BoardSetup(3,2:3)=BoardSetup(4,2:3);
-        BoardSetup(4,2:3)=PlaceHolder;
-        fprintf('swapped positions 3 and 4 \n');
+    if BoardSetup(4,4)==1 || BoardSetup(5,4)==1
+        PlaceHolder=BoardSetup(4,2:3);
+        BoardSetup(4,2:3)=BoardSetup(5,2:3);
+        BoardSetup(5,2:3)=PlaceHolder;
+        fprintf('swapped positions 4 and 5 \n');
         % **************************************************
         % **************************************************
         % Put your GAME BOARD stepper swap code here
@@ -501,6 +579,13 @@ if Pos3Rand==2
         % example stepper code is found above
         % **************************************************
         %***************************************************
+        steps_for_1 = 2052 / 2;
+        % Append combines the various strings into one individual string to be sent over to the Arduino
+        Multiple_Stepper_String = append("1,",int2str(steps_for_1),",");
+        % Send the string to the Arduino using the connected serial port
+        write(swap4,Multiple_Stepper_String,'string');
+        % Pause to allow the previous movements to complete before sending new movements
+        pause(5);
     end
 end
 
@@ -519,6 +604,13 @@ if Pos11Rand==2
         % example stepper code can be found above
         % **************************************************
         %***************************************************
+        steps_for_1 = 2052 / 2;
+        % Append combines the various strings into one individual string to be sent over to the Arduino
+        Multiple_Stepper_String = append("1,",int2str(steps_for_1),",");
+        % Send the string to the Arduino using the connected serial port
+        write(swap11,Multiple_Stepper_String,'string');
+        % Pause to allow the previous movements to complete before sending new movements
+        pause(5);
     end
 end
 
@@ -528,30 +620,20 @@ end
 Pos6Rand=randi(4);
 if Pos6Rand==2
     % Dump the game piece and it goes back to start
-    BoardSetup(6,2:3)=0;
-    fprintf('Position 6 has been dumped \n');
-        % **************************************************
-        % **************************************************
-        % Put your GAME BOARD servo dump code here
-        % make sure it is the right servo for this spot
-        % example servo code is found above
-        % **************************************************
-        %***************************************************
+    BoardSetup(8,2:3)=0;
+    fprintf('Position 8 has been dumped \n');
+    % **************************************************
+    % **************************************************
+    % Put your GAME BOARD servo dump code here
+    % make sure it is the right servo for this spot
+    % example servo code is found above
+    % **************************************************
+    %***************************************************
+    writePosition(servo, 1);
+    pause(1);
+    writePosition(servo, 0);
 end
 
-Pos9Rand=randi(4);
-if Pos9Rand==2
-    % Dump the game piece and it goes back to start
-    BoardSetup(9,2:3)=0;
-    fprintf('Position 9 has been dumped \n');
-    % **************************************************
-        % **************************************************
-        % Put your GAME BOARD servo dump code here
-        % make sure it is the right servo for this spot
-        % example servo code is found above
-        % **************************************************
-        %***************************************************
-end
 %***********************************************************************
 %***********************************************************************
 %************************************************************************
