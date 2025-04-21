@@ -15,7 +15,6 @@ writePosition(servo, 0); %Tell the Servo to go to its 0 Position (So we know whe
 % format to account for your additional stepper motors.
 % Have the first stepper do a full rotation while the second stepper does nothing
 steps_for_1 = 2052;
-steps_for_2 = 0;
 % Point the Servo at the first stepper (0.4 worked for the testing of this code, but you will likely have to change it to whatever works for you)
 writePosition(servo, 0.4);
 % Append combines the various strings into one individual string to be sent over to the Arduino
