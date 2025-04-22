@@ -23,7 +23,7 @@ while true
     rb_ratio(isnan(rb_ratio))=0;% this should only happen if it is black
     gb_ratio(isnan(gb_ratio))=0;
     imtool(croppedImage)
-    found = rb_ratio < .95 & rg_ratio < .95;
+    found = rb_ratio < .95 & rg_ratio < .95 & gb_ratio > 1;
     ImprovedPic=bwareaopen(found,1000); % gets rid of object smaller than 1000 pixels area
     %imshow(ImprovedPic)
     filledHoles=imfill(found,'holes');

@@ -15,7 +15,7 @@ image = snapshot(cam);
 % this will make your picture appear on the screen.
 imshow(image)
 
-roi4dice = [326   240    95    76];
+roi4dice = [262   255   111    79];
 disp(roi4dice)
 
 croppedImage=imcrop(image,roi4dice);
@@ -35,8 +35,8 @@ gb_ratio(isnan(gb_ratio))=0;
 
 imtool(croppedImage)
 
-found = rg_ratio < 1.5 & r_channel < 100 & g_channel < 100 & b_channel < 100;
-Improved2=bwareaopen(found,18); % gets rid of object smaller than 5 pixels area
+found = rg_ratio < 1.5 & r_channel < 120 & g_channel < 120 & b_channel < 120;
+Improved2=bwareaopen(found,20); % gets rid of object smaller than 5 pixels area
 imshow(Improved2)
 
 filledHoles=imfill(found,'holes');

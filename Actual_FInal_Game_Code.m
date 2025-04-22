@@ -81,7 +81,7 @@ turnNum=0;
 %*********************************************************************
 %*********************************************************************
 previous_roll = 0;
-roi4dice = [326   240    95    76];
+roi4dice = [262   255   111    79];
 croppingForRealign = [0 0 200 480];
 cam = webcam(2); % USB cam is the second
 s = serialport('COM4',9600);
@@ -146,7 +146,7 @@ while turnNum<= 10
             rb_ratio(isnan(rb_ratio))=0;% this should only happen if it is black
             gb_ratio(isnan(gb_ratio))=0;
             %imtool(croppedImage)
-            found = rg_ratio < 1.5 & r_channel < 100 & g_channel < 100 & b_channel < 100;
+            found = rg_ratio < 1.5 & r_channel < 120 & g_channel < 120 & b_channel < 120;
             Improved2=bwareaopen(found,18); % gets rid of object smaller than 5 pixels area
             %imshow(Improved2)
             filledHoles=imfill(found,'holes');
@@ -187,7 +187,7 @@ while turnNum<= 10
         rb_ratio(isnan(rb_ratio))=0;% this should only happen if it is black
         gb_ratio(isnan(gb_ratio))=0;
         %imtool(croppedImage)
-        found = rb_ratio < .95 & rg_ratio < .95;
+        found = rb_ratio < .95 & rg_ratio < .95 & gb_ratio > 1;
         ImprovedPic=bwareaopen(found,1000); % gets rid of object smaller than 1000 pixels area
         %imshow(ImprovedPic)
         filledHoles=imfill(found,'holes');
@@ -244,7 +244,7 @@ while turnNum<= 10
         elseif centroidslen(1) ~= 0
             Centroid_Distance=sqrt(((centroids(1,1)-centroids(2,1))^2)+((centroids(1,2)-centroids(2,2))^2));
             %fprintf('The distance between centroids is %.2f pixels \n',Centroid_Distance);
-            if Centroid_Distance < 120
+            if Centroid_Distance < 78
                 break;
             end
             if centroids(2,1) > centroids(1,1)
@@ -432,7 +432,7 @@ while turnNum<= 10
     write(s, int2str(steps_for_1), 'string');
     pause(7);
 
-    writePosition(rackPinion,0.9);
+    writePosition(rackPinion,0.8);
     pause(3);
     writePosition(servoMotor,.3);
     pause(3);
@@ -449,9 +449,17 @@ while turnNum<= 10
     write(s, int2str(steps_for_1), 'string');
     pause(7);
 
-    writePosition(rackPinion,0.9);
+    writePosition(rackPinion,0.8);
     pause(3);
-    writePosition(servoMotor,1);
+    desiredTimeClaw = .25;
+    nSteps = 40; % number of increments
+    %dtRack = desiredTimeRack/nSteps;
+    dtClaw = desiredTimeClaw/nSteps;
+    for p = linspace(.3,1,nSteps)
+        writePosition(servoMotor,p);
+        pause(dtClaw);
+    end
+    %writePosition(servoMotor,1);
     pause(3);
     writePosition(rackPinion,0);
     pause(3);
@@ -562,10 +570,12 @@ while turnNum<= 10
         % example servo code is found above
         % **************************************************
         %***************************************************
+        
         pause(5);
         writePosition(dumpServo, 0);
         pause(1);
         writePosition(dumpServo, 1);
+        
     end
     
     %***********************************************************************
