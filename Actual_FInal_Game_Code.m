@@ -103,7 +103,7 @@ pause(2);
 dumpServo = servo(a1, 'D11', 'MinPulseDuration', 700e-6, 'MaxPulseDuration', 2300e-6);
 writePosition(dumpServo,1);
 
-while turnNum<= 10
+while ScorePlayer1 < 4 && ScorePlayer2 < 4
     % Check whose turn it is
     if rem(turnNum,2)==0 % Turn number is EVEN
         ColOfInterest=3;
