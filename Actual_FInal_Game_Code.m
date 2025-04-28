@@ -81,7 +81,7 @@ turnNum=0;
 %*********************************************************************
 %*********************************************************************
 previous_roll = 0;
-roi4dice = [262   255   111    79];
+roi4dice = [225   215   113    78];
 croppingForRealign = [0 0 200 480];
 cam = webcam(2); % USB cam is the second
 s = serialport('COM4',9600);
@@ -146,7 +146,7 @@ while ScorePlayer1 < 4 && ScorePlayer2 < 4
             rb_ratio(isnan(rb_ratio))=0;% this should only happen if it is black
             gb_ratio(isnan(gb_ratio))=0;
             %imtool(croppedImage)
-            found = rg_ratio < 1.5 & r_channel < 120 & g_channel < 120 & b_channel < 120;
+            found = rg_ratio < 2 & r_channel < 120 & g_channel < 120 & b_channel < 120;
             Improved2=bwareaopen(found,18); % gets rid of object smaller than 5 pixels area
             %imshow(Improved2)
             filledHoles=imfill(found,'holes');
@@ -170,6 +170,8 @@ while ScorePlayer1 < 4 && ScorePlayer2 < 4
         dice=randi(6);
     end
 
+    %dice = randi(6); % for testing purposes
+    
     % realign
     while true
         image = snapshot(cam);
@@ -269,7 +271,6 @@ while ScorePlayer1 < 4 && ScorePlayer2 < 4
         end
     end
 
-
     pause(5);
     %**********************************************************************
     %**********************************************************************
@@ -330,6 +331,7 @@ while ScorePlayer1 < 4 && ScorePlayer2 < 4
     if opportunities==0
         fprintf('You have %d options, if that number is zero turn passes to next player. \n',opportunities);
         MoveComplete=1;
+        continue;
     end
     %****************************************************************
     % Section 3 - Move Pieces
@@ -558,7 +560,7 @@ while ScorePlayer1 < 4 && ScorePlayer2 < 4
     %*********************************************************************
     % DUMP
     % ********************************************************************
-    Pos6Rand=2;%randi(4);
+    Pos6Rand=randi(4);
     if Pos6Rand==2
         % Dump the game piece and it goes back to start
         BoardSetup(8,2:3)=0;
